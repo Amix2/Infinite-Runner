@@ -4,15 +4,37 @@ using UnityEngine;
 
 public class Settings : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+
+    public PlayerSettings player;
+    public static PlayerSettings Player
     {
-        
+        get { return instance.player; }
     }
 
-    // Update is called once per frame
-    void Update()
+    public WorldSettings world;
+    public static WorldSettings World
     {
-        
+        get { return instance.world; }
+    }
+
+
+
+    private static Settings instance;
+
+    private void Awake()
+    {
+        instance = this;
     }
 }
+
+[System.Serializable]
+public class PlayerSettings
+{
+}
+
+[System.Serializable]
+public class WorldSettings
+{
+    public int minDistanceInFront = 10;
+}
+

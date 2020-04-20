@@ -42,6 +42,8 @@ public class PlayerController : MonoBehaviour
 
         newVelocity = ApplyChangeLanes(newVelocity);
 
+        newVelocity.z = 8f;
+
         rigidbody.velocity = newVelocity;
     }
 
