@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: d2f24bfdb0a758e41813bbc7ae4f978f, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -148,7 +148,7 @@ Transform:
   m_GameObject: {fileID: 82151468}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_LocalScale: {x: 0.4, y: 0.5, z: 0.4}
   m_Children: []
   m_Father: {fileID: 1679002805}
   m_RootOrder: 1
@@ -286,11 +286,11 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 705507993}
   m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalPosition: {x: 6, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
 --- !u!1 &963194225
 GameObject:
@@ -404,10 +404,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa2e5eee108d99488b9c76f891a80d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  avaliableChunks: []
+  avaliableChunks:
+  - {fileID: 6822459581972812481, guid: 63db9984bfd20b741add73abb31dfc4e, type: 3}
+  - {fileID: 8119316332935965459, guid: 5f1385b8b7935b84f9b2940135d6d18d, type: 3}
+  - {fileID: 6824444727852457016, guid: 06a5a19354d0e644abd8ec284c994ce8, type: 3}
+  - {fileID: 5518491562636744126, guid: 321c7fef5c0ea1f4ca2f04be7321bc6f, type: 3}
+  - {fileID: 1119338950072490866, guid: d75732964268f994a881a90cb3c19018, type: 3}
+  - {fileID: 435373482993045527, guid: 654f377c4981ca044bbe388968b9d2ca, type: 3}
+  - {fileID: 2682820574881562165, guid: fe049f5afb55d3048a9814a44f24d465, type: 3}
+  player: {fileID: 1679002804}
   startingChunk: {fileID: 6822459581972812481, guid: 63db9984bfd20b741add73abb31dfc4e,
     type: 3}
-  player: {fileID: 1679002804}
 --- !u!4 &1373022888
 Transform:
   m_ObjectHideFlags: 0
@@ -420,7 +427,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1373499162
 GameObject:
@@ -452,7 +459,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   world:
-    minDistanceInFront: 10
+    minDistanceInFront: 30
+    playerAcceleration: 5
 --- !u!4 &1373499164
 Transform:
   m_ObjectHideFlags: 0
@@ -465,7 +473,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1679002804
 GameObject:
@@ -477,7 +485,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1679002805}
   - component: {fileID: 1679002806}
-  - component: {fileID: 1679002808}
   - component: {fileID: 1679002807}
   m_Layer: 0
   m_Name: Player
@@ -500,7 +507,7 @@ Transform:
   - {fileID: 963194228}
   - {fileID: 82151469}
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1679002806
 MonoBehaviour:
@@ -514,12 +521,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edb7e1a9a2516654eb4b8314027de016, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 6
-  jumpHeight: 1
+  jumpHeight: 0.5
   laneSwitchSpeed: 1
-  layerMask:
+  groundLayerMask:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 768
+  frontLayerMask:
+    serializedVersion: 2
+    m_Bits: 512
+  sideLayerMask:
+    serializedVersion: 2
+    m_Bits: 1536
+  forwardVelocity: 10
+  safeGapToSide: 0.05
 --- !u!136 &1679002807
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -528,25 +542,9 @@ CapsuleCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1679002804}
   m_Material: {fileID: 0}
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_Enabled: 1
   m_Radius: 0.25
   m_Height: 1
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
---- !u!54 &1679002808
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1679002804}
-  serializedVersion: 2
-  m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 112
-  m_CollisionDetection: 0

@@ -28,11 +28,15 @@ public class Chunk : MonoBehaviour
     }
 
     // Start is called before the first frame update
-    void Start()
+    void Awake()
+    {
+        Init();
+    }
+
+    public void Init()
     {
         SetupInputData();
         SetupOutputData();
-
     }
 
     private void SetupOutputData()
