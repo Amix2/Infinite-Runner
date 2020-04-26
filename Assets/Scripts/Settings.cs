@@ -37,5 +37,6 @@ public class WorldSettings
 {
     public int minDistanceInFront = 10;
     public float playerAcceleration = 1f;
+    public float maxPlayerVelocity;
 }
 

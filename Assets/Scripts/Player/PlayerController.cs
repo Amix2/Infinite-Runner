@@ -1,24 +1,36 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
     public float jumpHeight = 1f;
+    public float jumpDistance = 8f;
     public float laneSwitchSpeed = 1f;
     public LayerMask groundLayerMask;
     public LayerMask frontLayerMask;
     public LayerMask sideLayerMask;
-    public float forwardVelocity = 1f;
+    public LayerMask sidePanelLayerMask;
+    public float forwardSpeed = 1f;
     public float safeGapToSide = 0.2f;
+    public float maxLineSwitchSpeed = 10f;
 
-    private float jumpSpeed;
+    public ChunkSpawner chunkSpawner;
+
+    public Action OnDeath;
+
+    private float ForwardVelocity => Mathf.Sqrt(forwardSpeed);
+    private float JumpSpeedY => 4 * ForwardVelocity * jumpHeight / jumpDistance;
+    private float GravityY => 8 * ForwardVelocity * ForwardVelocity * jumpHeight / (jumpDistance * jumpDistance);
+
     private bool jumped = false;
     private int targetXPosition;
     private bool crouch = false;
     private Vector3 velocity = Vector3.zero;
 
-    private Collider[] overlapBoxArray;
 
+    private Collider[] overlapBoxArray;
+    private Chunk lastDeathChunk = null;
 
 
     bool IsGrounded => Physics.OverlapBoxNonAlloc(CheckPosisionGround, CheckBoxGround, overlapBoxArray, Quaternion.identity, groundLayerMask) > 0;
@@ -32,7 +44,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 CheckBoxGround => new Vector3(transform.localScale.x * 0.25f, transform.localScale.y * 0.1f, transform.localScale.z * 0.25f);
 
     private Vector3 CheckBoxSide => new Vector3(transform.localScale.x * 0.2f, transform.localScale.y * 0.3f, transform.localScale.z * 0.3f);
-    private Vector3 CheckBoxFront => new Vector3(transform.localScale.x * 0.2f, transform.localScale.y * 0.3f, transform.localScale.z * 0.1f);
+    private Vector3 CheckBoxFront => new Vector3(transform.localScale.x * 0.2f, transform.localScale.y * 0.2f, transform.localScale.z * 0.1f);
 
     private Vector3 CheckPosisionLeft => transform.position + Vector3.left * 0.15f * transform.localScale.x;
     private bool LeftBoxCollision => Physics.OverlapBoxNonAlloc(CheckPosisionLeft, CheckBoxSide, overlapBoxArray, Quaternion.identity, sideLayerMask) > 0;
@@ -40,35 +52,37 @@ public class PlayerController : MonoBehaviour
     private Vector3 CheckPosisionRight => transform.position + Vector3.right * 0.15f * transform.localScale.x;
     private bool RightBoxCollision => Physics.OverlapBoxNonAlloc(CheckPosisionRight, CheckBoxSide, overlapBoxArray, Quaternion.identity, sideLayerMask) > 0;
 
-    private Vector3 CheckPosisionFront => transform.position + Vector3.forward * 0.2f * transform.localScale.x;
+    private Vector3 CheckPosisionFront => transform.position + Vector3.forward * 0.2f * transform.localScale.z;
     private bool FrontBoxCollision => Physics.OverlapBoxNonAlloc(CheckPosisionFront, CheckBoxFront, overlapBoxArray, Quaternion.identity, frontLayerMask) > 0;
 
     // Start is called before the first frame update
     private void Start()
     {
-        jumpSpeed = Mathf.Sqrt(2 * jumpHeight * 10);
         targetXPosition = Mathf.RoundToInt(transform.position.x);
         overlapBoxArray = new Collider[10];
+        lastDeathChunk = chunkSpawner.FirstChunk;
     }
 
     // Update is called once per frame
     private void Update()
     {
-        //print(CollisionLeft + " " + CollisionRight);
 
         if(FrontBoxCollision)
         {
-            print("GAME OVER");
+            if(lastDeathChunk != chunkSpawner.FirstChunk)
+            {
+                OnDeath?.Invoke();
+                lastDeathChunk = chunkSpawner.FirstChunk;
+            }
         }
 
-
-        forwardVelocity += Settings.World.playerAcceleration * Time.deltaTime;  // forward acceleration
-        velocity.y += Physics.gravity.y * Time.deltaTime;   // gravity
-        velocity.z = Mathf.Sqrt(forwardVelocity);
+        forwardSpeed += Settings.World.playerAcceleration * Time.deltaTime;  // forward acceleration
+        velocity.y -= GravityY * Time.deltaTime;   // gravity
+        velocity.z = ForwardVelocity;
 
         if (!jumped && IsGrounded && Input.GetKey(KeyCode.Space))
         {
-            velocity.y = jumpSpeed;
+            velocity.y = JumpSpeedY;
             jumped = true;
         }
         if (!IsGrounded) jumped = false;
@@ -105,7 +119,7 @@ public class PlayerController : MonoBehaviour
 
     private void ApplyChangeLanes()
     {
-        print(laneSwitchSpeed * Mathf.Sqrt(forwardVelocity));
+        //print(laneSwitchSpeed * Mathf.Sqrt(forwardVelocity));
         if (IsOnTargetLane)
         {
             transform.position = new Vector3(targetXPosition, transform.position.y, transform.position.z);
@@ -113,7 +127,7 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            float velToLine = Mathf.Min(laneSwitchSpeed * Mathf.Sqrt(forwardVelocity), (Mathf.Abs(PositionX - targetXPosition) / Time.deltaTime));
+            float velToLine = Mathf.Min(laneSwitchSpeed * ForwardVelocity, (Mathf.Abs(PositionX - targetXPosition) / Time.deltaTime), maxLineSwitchSpeed);
             if (ShouldGoLeft)
             {
                 // go left
@@ -159,16 +173,31 @@ public class PlayerController : MonoBehaviour
         if ((Input.GetKey(KeyCode.A) && !Input.GetKey(KeyCode.S)) || Input.GetKeyDown(KeyCode.A))
         {
             // left     x  <
-            if (ShouldGoRight || IsOnTargetLane)
+            if (targetXPosition > -1*CurrentNumOfLanes()/2 && (ShouldGoRight || IsOnTargetLane))
             {
                 targetXPosition--;
             }
         }
         if ((Input.GetKey(KeyCode.D) && !Input.GetKey(KeyCode.S)) || Input.GetKeyDown(KeyCode.D))
         {   // right    > x
-            if (ShouldGoLeft || IsOnTargetLane)
+            if (targetXPosition < CurrentNumOfLanes()/2 && (ShouldGoLeft || IsOnTargetLane))
                 targetXPosition++;
         }
+    }
+
+    private int CurrentNumOfLanes()
+    {
+        int colNum = Physics.OverlapBoxNonAlloc(transform.position, new Vector3(20f, 10f, 1f), overlapBoxArray, Quaternion.identity, sidePanelLayerMask);
+        int maxPos = int.MinValue;
+        int minPos = int.MaxValue;
+        for(int i=0; i< colNum; i++)
+        {
+            Collider collider = overlapBoxArray[i];
+            if (maxPos < collider.transform.position.x) maxPos = (int) collider.transform.position.x;
+            if (minPos > collider.transform.position.x) minPos = (int) collider.transform.position.x;
+        }
+
+        return maxPos - minPos;
     }
 
     private void OnDrawGizmos()
