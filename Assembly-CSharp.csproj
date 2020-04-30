@@ -66,9 +66,16 @@
     <Compile Include="Assets\Scripts\Chunk.cs" />
     <Compile Include="Assets\Scripts\ChunkSpawner.cs" />
     <Compile Include="Assets\Scripts\ChunkSpawnerAvaliableChunks.cs" />
+    <Compile Include="Assets\Scripts\DefaultStateController.cs" />
+    <Compile Include="Assets\Scripts\GameState.cs" />
+    <Compile Include="Assets\Scripts\InputMode.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerController.cs" />
     <Compile Include="Assets\Scripts\Settings.cs" />
+    <Compile Include="Assets\Scripts\TutorialStateController.cs" />
+    <Compile Include="Assets\Scripts\UI\DarkCanvas.cs" />
     <Compile Include="Assets\Scripts\UI\DeathCount.cs" />
+    <Compile Include="Assets\Scripts\UI\MainUI.cs" />
+    <Compile Include="Assets\Scripts\UI\PauseCanvas.cs" />
     <Compile Include="Assets\Scripts\UI\ScoreCount.cs" />
     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMPro.cginc" />
     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMP_SDF-Mobile Overlay.shader" />

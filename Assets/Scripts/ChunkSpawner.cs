@@ -7,34 +7,30 @@ public class ChunkSpawner : MonoBehaviour
     public GameObject player;
     public GameObject startingChunk;
     public GameObject flatChunk;
-    public bool skipIntro = true;
 
     private int emptyChunksAfterDeath = 3;
     private List<Chunk> orderedChunks;
-    public Chunk LastChunk => orderedChunks[orderedChunks.Count - 1];
+    public Chunk LastChunk => orderedChunks.Count > 0 ? orderedChunks[orderedChunks.Count - 1] : null;
     public Chunk FirstChunk => orderedChunks[0];
     private Vector3 PlayerPosition => player.transform.position;
 
     // Start is called before the first frame update
     private void Start()
     {
-        orderedChunks = new List<Chunk>();
-        GameObject firstChunk;
-        if (skipIntro)
-        {
-            firstChunk = Instantiate(flatChunk, Vector3.zero, Quaternion.identity);
-        }
-        else
-        {
-            firstChunk = Instantiate(startingChunk, Vector3.zero, Quaternion.identity);
-        }
-        orderedChunks.Add(firstChunk.GetComponent<Chunk>());
-
         foreach (GameObject chunkGO in avaliableChunks)
         {
             chunkGO.GetComponent<Chunk>().Init();
         }
         flatChunk.GetComponent<Chunk>().Init();
+
+        if(orderedChunks == null)
+        {
+            orderedChunks = new List<Chunk>();
+            GameObject firstChunk = Instantiate(startingChunk, Vector3.zero, Quaternion.identity);
+        
+            orderedChunks.Add(firstChunk.GetComponent<Chunk>());
+        }
+
 
         GameObject.Find("Player").GetComponent<PlayerController>().OnDeath += PutEmptyLevelOnDeath;
     }
@@ -44,8 +40,8 @@ public class ChunkSpawner : MonoBehaviour
     {
         if (LastChunk.DistanceToEnd(PlayerPosition) < Settings.World.minDistanceInFront)
         {
-            GameObject chunk = Instantiate(GetNextChunk(), LastChunk.EndPosition, Quaternion.identity);
-            orderedChunks.Add(chunk.GetComponent<Chunk>());
+            GameObject nextChunk = GetNextChunk();
+            InsertNextChunk(nextChunk);
         }
 
         if (FirstChunk.DistanceToEnd(PlayerPosition) < 0)
@@ -53,6 +49,32 @@ public class ChunkSpawner : MonoBehaviour
             Destroy(FirstChunk.gameObject);
             orderedChunks.RemoveAt(0);
         }
+    }
+
+    private void InsertNextChunk(GameObject nextChunk)
+    {
+        Vector3 spawnPos = LastChunk != null ? LastChunk.EndPosition : Vector3.zero;
+        GameObject chunk = Instantiate(nextChunk, spawnPos, Quaternion.identity);
+        orderedChunks.Add(chunk.GetComponent<Chunk>());
+    }
+
+    public void SetNextChunk(GameObject nextChunk)
+    {
+        for(int i = orderedChunks.Count-1; i>=1; i--)
+        {
+            Destroy(orderedChunks[i].gameObject);
+            orderedChunks.RemoveAt(i);
+        }
+        InsertNextChunk(nextChunk);
+    }
+
+    public void ClearChunks()
+    {
+        foreach(var chunk in orderedChunks)
+        {
+            Destroy(chunk.gameObject);
+        }
+        orderedChunks = new List<Chunk>();
     }
 
     private void PutEmptyLevelOnDeath()

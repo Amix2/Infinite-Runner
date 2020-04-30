@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -28,14 +27,12 @@ public class PlayerController : MonoBehaviour
     private bool crouch = false;
     private Vector3 velocity = Vector3.zero;
 
-
     private Collider[] overlapBoxArray;
     private Chunk lastDeathChunk = null;
 
-
     bool IsGrounded => Physics.OverlapBoxNonAlloc(CheckPosisionGround, CheckBoxGround, overlapBoxArray, Quaternion.identity, groundLayerMask) > 0;
-    bool SwitchingLanes => Mathf.Abs(transform.position.x - targetXPosition) > 0.01f;
-    bool IsOnTargetLane => Mathf.Abs(transform.position.x - targetXPosition) < 0.01;
+    bool SwitchingLanes => Mathf.Abs(transform.position.x - targetXPosition) > 0.001f;
+    bool IsOnTargetLane => Mathf.Abs(transform.position.x - targetXPosition) < 0.001;
     float PositionX => transform.position.x;
     bool ShouldGoLeft => targetXPosition - PositionX < 0;
     bool ShouldGoRight => targetXPosition - PositionX > 0;
@@ -44,12 +41,12 @@ public class PlayerController : MonoBehaviour
     private Vector3 CheckBoxGround => new Vector3(transform.localScale.x * 0.25f, transform.localScale.y * 0.1f, transform.localScale.z * 0.25f);
 
     private Vector3 CheckBoxSide => new Vector3(transform.localScale.x * 0.2f, transform.localScale.y * 0.3f, transform.localScale.z * 0.3f);
-    private Vector3 CheckBoxFront => new Vector3(transform.localScale.x * 0.2f, transform.localScale.y * 0.2f, transform.localScale.z * 0.1f);
+    private Vector3 CheckBoxFront => new Vector3(transform.localScale.x * 0.1f, transform.localScale.y * 0.1f, transform.localScale.z * 0.1f);
 
-    private Vector3 CheckPosisionLeft => transform.position + Vector3.left * 0.15f * transform.localScale.x;
+    private Vector3 CheckPosisionLeft => transform.position + Vector3.left * 0.15f * transform.localScale.x + Vector3.forward * 0.05f * transform.localScale.z;
     private bool LeftBoxCollision => Physics.OverlapBoxNonAlloc(CheckPosisionLeft, CheckBoxSide, overlapBoxArray, Quaternion.identity, sideLayerMask) > 0;
 
-    private Vector3 CheckPosisionRight => transform.position + Vector3.right * 0.15f * transform.localScale.x;
+    private Vector3 CheckPosisionRight => transform.position + Vector3.right * 0.15f * transform.localScale.x + Vector3.forward * 0.05f * transform.localScale.z;
     private bool RightBoxCollision => Physics.OverlapBoxNonAlloc(CheckPosisionRight, CheckBoxSide, overlapBoxArray, Quaternion.identity, sideLayerMask) > 0;
 
     private Vector3 CheckPosisionFront => transform.position + Vector3.forward * 0.2f * transform.localScale.z;
@@ -66,37 +63,99 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     private void Update()
     {
-
-        if(FrontBoxCollision)
+        if (!GameState.InputMode.Freeze)
         {
-            if(lastDeathChunk != chunkSpawner.FirstChunk)
+            if (FrontBoxCollision)
             {
-                OnDeath?.Invoke();
-                lastDeathChunk = chunkSpawner.FirstChunk;
+                if (lastDeathChunk != chunkSpawner.FirstChunk)
+                {
+                    OnDeath?.Invoke();
+                    lastDeathChunk = chunkSpawner.FirstChunk;
+                }
             }
+
+            forwardSpeed = Settings.World.playerAcceleration * Mathf.Sqrt(transform.position.z+1);  // forward acceleration
+
+            velocity.y -= GravityY * Time.deltaTime;   // gravity
+            velocity.z = ForwardVelocity;
+
+            if (!jumped && IsGrounded && GameState.InputMode.JumpKey)
+            {
+                velocity.y = JumpSpeedY;
+                jumped = true;
+            }
+            if (!IsGrounded) jumped = false;
+            if (IsGrounded && velocity.y < 0) velocity.y = 0;
+
+            if (GameState.InputMode.LeftKey)
+            {
+                // left     x  <
+                if (targetXPosition > -1 * CurrentNumOfLanes() / 2 && (ShouldGoRight || IsOnTargetLane))
+                    targetXPosition--;
+            }
+            if (GameState.InputMode.RightKey)
+            {   // right    > x
+                if (targetXPosition < CurrentNumOfLanes() / 2 && (ShouldGoLeft || IsOnTargetLane))
+                    targetXPosition++;
+            }
+
+            if (IsOnTargetLane)
+            {
+                transform.position = new Vector3(targetXPosition, transform.position.y, transform.position.z);
+                velocity.x = 0f;
+            }
+            else
+            {
+                float velToLine = Mathf.Min(laneSwitchSpeed * ForwardVelocity, (Mathf.Abs(PositionX - targetXPosition) / Time.deltaTime), maxLineSwitchSpeed);
+                if (ShouldGoLeft)
+                {
+                    // go left
+                    if (!LeftBoxCollision)
+                    {
+                        velocity.x = -velToLine;
+                    }
+                    else
+                    {
+                        if (overlapBoxArray[0].gameObject.layer == LayerMask.NameToLayer("SidePanel"))
+                        {
+                            Physics.BoxCast(CheckPosisionLeft, CheckBoxSide, Vector3.left, out RaycastHit hitInfo);
+                            velocity.x = hitInfo.distance;
+                        }
+                        else
+                        {
+                            velocity.x = 0;
+                        }
+                    }
+                }
+                else
+                {
+                    // go right
+                    if (!RightBoxCollision)
+                    {
+                        velocity.x = +velToLine;
+                    }
+                    else
+                    {
+                        if (overlapBoxArray[0].gameObject.layer == LayerMask.NameToLayer("SidePanel"))
+                        {
+                            Physics.BoxCast(CheckPosisionRight, CheckBoxSide, Vector3.right, out RaycastHit hitInfo);
+                            velocity.x = -hitInfo.distance;
+                        }
+                        else
+                        {
+                            velocity.x = 0;
+                        }
+                    }
+                }
+            }
+
+            if (velocity.z > GameState.InputMode.MaxForwardSpeed)
+            {
+                velocity.z = GameState.InputMode.MaxForwardSpeed;
+                forwardSpeed = GameState.InputMode.MaxForwardSpeed * GameState.InputMode.MaxForwardSpeed;
+            }
+            transform.position += velocity * Time.deltaTime;
         }
-
-        forwardSpeed += Settings.World.playerAcceleration * Time.deltaTime;  // forward acceleration
-        velocity.y -= GravityY * Time.deltaTime;   // gravity
-        velocity.z = ForwardVelocity;
-
-        if (!jumped && IsGrounded && Input.GetKey(KeyCode.Space))
-        {
-            velocity.y = JumpSpeedY;
-            jumped = true;
-        }
-        if (!IsGrounded) jumped = false;
-        if (IsGrounded && velocity.y < 0) velocity.y = 0;
-
-
-        HandleInputToChangeLanes();
-
-        ApplyChangeLanes();
-
-
-        //HandleCrouch();
-
-        transform.position += velocity * Time.deltaTime;
     }
 
     private void HandleCrouch()
@@ -108,7 +167,8 @@ public class PlayerController : MonoBehaviour
             {
                 scale.y = 1f;
                 crouch = false;
-            } else
+            }
+            else
             {
                 scale.y = 0.5f;
                 crouch = true;
@@ -117,84 +177,16 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void ApplyChangeLanes()
-    {
-        //print(laneSwitchSpeed * Mathf.Sqrt(forwardVelocity));
-        if (IsOnTargetLane)
-        {
-            transform.position = new Vector3(targetXPosition, transform.position.y, transform.position.z);
-            velocity.x = 0f;
-        }
-        else
-        {
-            float velToLine = Mathf.Min(laneSwitchSpeed * ForwardVelocity, (Mathf.Abs(PositionX - targetXPosition) / Time.deltaTime), maxLineSwitchSpeed);
-            if (ShouldGoLeft)
-            {
-                // go left
-                if(!LeftBoxCollision)
-                {
-                    velocity.x = -velToLine;
-                } else
-                {
-                    if (overlapBoxArray[0].gameObject.layer == LayerMask.NameToLayer("SidePanel"))
-                    {
-                        Physics.BoxCast(CheckPosisionLeft, CheckBoxSide, Vector3.left, out RaycastHit hitInfo);
-                        velocity.x = hitInfo.distance;
-                    }
-                    else
-                    {
-                        velocity.x = 0;
-                    }
-                }
-            }
-            else
-            {
-                // go right
-                if(!RightBoxCollision)
-                {
-                    velocity.x = +velToLine;
-                }
-                else
-                {
-                    if(overlapBoxArray[0].gameObject.layer == LayerMask.NameToLayer("SidePanel")) {
-                        Physics.BoxCast(CheckPosisionRight, CheckBoxSide, Vector3.right, out RaycastHit hitInfo);
-                        velocity.x = -hitInfo.distance;
-                    } else
-                    {
-                        velocity.x = 0;
-                    }
-                }
-            }
-        }
-    }
-
-    private void HandleInputToChangeLanes()
-    {
-        if ((Input.GetKey(KeyCode.A) && !Input.GetKey(KeyCode.S)) || Input.GetKeyDown(KeyCode.A))
-        {
-            // left     x  <
-            if (targetXPosition > -1*CurrentNumOfLanes()/2 && (ShouldGoRight || IsOnTargetLane))
-            {
-                targetXPosition--;
-            }
-        }
-        if ((Input.GetKey(KeyCode.D) && !Input.GetKey(KeyCode.S)) || Input.GetKeyDown(KeyCode.D))
-        {   // right    > x
-            if (targetXPosition < CurrentNumOfLanes()/2 && (ShouldGoLeft || IsOnTargetLane))
-                targetXPosition++;
-        }
-    }
-
     private int CurrentNumOfLanes()
     {
         int colNum = Physics.OverlapBoxNonAlloc(transform.position, new Vector3(20f, 10f, 1f), overlapBoxArray, Quaternion.identity, sidePanelLayerMask);
         int maxPos = int.MinValue;
         int minPos = int.MaxValue;
-        for(int i=0; i< colNum; i++)
+        for (int i = 0; i < colNum; i++)
         {
             Collider collider = overlapBoxArray[i];
-            if (maxPos < collider.transform.position.x) maxPos = (int) collider.transform.position.x;
-            if (minPos > collider.transform.position.x) minPos = (int) collider.transform.position.x;
+            if (maxPos < collider.transform.position.x) maxPos = (int)collider.transform.position.x;
+            if (minPos > collider.transform.position.x) minPos = (int)collider.transform.position.x;
         }
 
         return maxPos - minPos;
