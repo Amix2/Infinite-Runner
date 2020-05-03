@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class PauseCanvas : MonoBehaviour
 {
+
+    public GameObject player;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -18,6 +21,18 @@ public class PauseCanvas : MonoBehaviour
 
     public void OnContinueButton()
     {
-        GameState.instance.CurrentGameState = GameStateValue.Normal;
+        GameState.SetState(GameStateValue.Normal);
+    }
+
+    public void OnRestartWithTutorial()
+    {
+        player.GetComponent<PlayerController>().ResetPosition();
+        GameState.SetState(GameStateValue.Reset_Tutorial);
+    }
+
+    public void OnRestart()
+    {
+        player.GetComponent<PlayerController>().ResetPosition();
+        GameState.SetState(GameStateValue.Reset_Normal);
     }
 }

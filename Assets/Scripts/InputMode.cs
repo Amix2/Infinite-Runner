@@ -18,7 +18,7 @@ public class NormalInputMode : IInputMode
 
     public bool RightKey => (Input.GetKey(KeyCode.D) && !Input.GetKey(KeyCode.S)) || Input.GetKeyDown(KeyCode.D);
 
-    public float MaxForwardSpeed => 25f;
+    public float MaxForwardSpeed => 50f;
 
     public bool Freeze => false;
 }

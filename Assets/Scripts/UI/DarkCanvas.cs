@@ -7,12 +7,12 @@ public class DarkCanvas : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        gameObject.SetActive(GameState.PresentGameState == GameStateValue.Pause || GameState.PresentGameState == GameStateValue.Freeze);
+        gameObject.SetActive(GameState.PresentGameState == GameStateValue.Pause);
         GameState.OnStateChange += UpdateGUI;
     }
 
     void UpdateGUI(GameStateValue gameState)
     {
-        gameObject.SetActive(gameState == GameStateValue.Pause || gameState == GameStateValue.Freeze);
+        gameObject.SetActive(gameState == GameStateValue.Pause);
     }
 }

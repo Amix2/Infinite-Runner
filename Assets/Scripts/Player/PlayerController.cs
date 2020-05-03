@@ -5,7 +5,6 @@ public class PlayerController : MonoBehaviour
 {
     public float jumpHeight = 1f;
     public float jumpDistance = 8f;
-    public float laneSwitchSpeed = 1f;
     public LayerMask groundLayerMask;
     public LayerMask frontLayerMask;
     public LayerMask sideLayerMask;
@@ -13,6 +12,9 @@ public class PlayerController : MonoBehaviour
     public float forwardSpeed = 1f;
     public float safeGapToSide = 0.2f;
     public float maxLineSwitchSpeed = 10f;
+    public float laneSwitchInitSpeed = 4f;
+    public float laneSwitchAcceleration = 8f;
+    private float laneSwitchSpeedCurrent = 0f;
 
     public ChunkSpawner chunkSpawner;
 
@@ -20,19 +22,21 @@ public class PlayerController : MonoBehaviour
 
     private float ForwardVelocity => Mathf.Sqrt(forwardSpeed);
     private float JumpSpeedY => 4 * ForwardVelocity * jumpHeight / jumpDistance;
+
     private float GravityY => 8 * ForwardVelocity * ForwardVelocity * jumpHeight / (jumpDistance * jumpDistance);
 
+    private Vector3 startPosition;
     private bool jumped = false;
     private int targetXPosition;
-    private bool crouch = false;
     private Vector3 velocity = Vector3.zero;
 
     private Collider[] overlapBoxArray;
-    private Chunk lastDeathChunk = null;
+    private float lastCollisionTime = -1000f;
+    private float collisionInterval = 1f;
 
     bool IsGrounded => Physics.OverlapBoxNonAlloc(CheckPosisionGround, CheckBoxGround, overlapBoxArray, Quaternion.identity, groundLayerMask) > 0;
     bool SwitchingLanes => Mathf.Abs(transform.position.x - targetXPosition) > 0.001f;
-    bool IsOnTargetLane => Mathf.Abs(transform.position.x - targetXPosition) < 0.001;
+    bool IsOnTargetLane => Mathf.Abs(transform.position.x - targetXPosition) < 0.0001;
     float PositionX => transform.position.x;
     bool ShouldGoLeft => targetXPosition - PositionX < 0;
     bool ShouldGoRight => targetXPosition - PositionX > 0;
@@ -57,7 +61,8 @@ public class PlayerController : MonoBehaviour
     {
         targetXPosition = Mathf.RoundToInt(transform.position.x);
         overlapBoxArray = new Collider[10];
-        lastDeathChunk = chunkSpawner.FirstChunk;
+        startPosition = transform.position;
+        ResetPosition();
     }
 
     // Update is called once per frame
@@ -67,14 +72,14 @@ public class PlayerController : MonoBehaviour
         {
             if (FrontBoxCollision)
             {
-                if (lastDeathChunk != chunkSpawner.FirstChunk)
+                if (lastCollisionTime + collisionInterval < Time.realtimeSinceStartup)
                 {
                     OnDeath?.Invoke();
-                    lastDeathChunk = chunkSpawner.FirstChunk;
+                    lastCollisionTime = Time.realtimeSinceStartup;
                 }
             }
 
-            forwardSpeed = Settings.World.playerAcceleration * Mathf.Sqrt(transform.position.z+1);  // forward acceleration
+            forwardSpeed = Settings.World.playerAcceleration * Mathf.Sqrt(transform.position.z + 1);  // forward acceleration
 
             velocity.y -= GravityY * Time.deltaTime;   // gravity
             velocity.z = ForwardVelocity;
@@ -103,28 +108,26 @@ public class PlayerController : MonoBehaviour
             {
                 transform.position = new Vector3(targetXPosition, transform.position.y, transform.position.z);
                 velocity.x = 0f;
+                laneSwitchSpeedCurrent = 0f;
             }
             else
             {
-                float velToLine = Mathf.Min(laneSwitchSpeed * ForwardVelocity, (Mathf.Abs(PositionX - targetXPosition) / Time.deltaTime), maxLineSwitchSpeed);
+                if (laneSwitchSpeedCurrent < laneSwitchInitSpeed)
+                {
+                    laneSwitchSpeedCurrent = laneSwitchInitSpeed;
+                }
+                float velToLine = Mathf.Min(ForwardVelocity, (Mathf.Abs(PositionX - targetXPosition) / Time.deltaTime), laneSwitchSpeedCurrent + laneSwitchAcceleration * Time.deltaTime);
                 if (ShouldGoLeft)
                 {
                     // go left
                     if (!LeftBoxCollision)
                     {
                         velocity.x = -velToLine;
+                        laneSwitchSpeedCurrent += laneSwitchAcceleration * Time.deltaTime;
                     }
                     else
                     {
-                        if (overlapBoxArray[0].gameObject.layer == LayerMask.NameToLayer("SidePanel"))
-                        {
-                            Physics.BoxCast(CheckPosisionLeft, CheckBoxSide, Vector3.left, out RaycastHit hitInfo);
-                            velocity.x = hitInfo.distance;
-                        }
-                        else
-                        {
-                            velocity.x = 0;
-                        }
+                        velocity.x = 0;
                     }
                 }
                 else
@@ -133,18 +136,11 @@ public class PlayerController : MonoBehaviour
                     if (!RightBoxCollision)
                     {
                         velocity.x = +velToLine;
+                        laneSwitchSpeedCurrent += laneSwitchAcceleration * Time.deltaTime;
                     }
                     else
                     {
-                        if (overlapBoxArray[0].gameObject.layer == LayerMask.NameToLayer("SidePanel"))
-                        {
-                            Physics.BoxCast(CheckPosisionRight, CheckBoxSide, Vector3.right, out RaycastHit hitInfo);
-                            velocity.x = -hitInfo.distance;
-                        }
-                        else
-                        {
-                            velocity.x = 0;
-                        }
+                        velocity.x = 0;
                     }
                 }
             }
@@ -158,23 +154,10 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void HandleCrouch()
+    public void ResetPosition()
     {
-        if (Input.GetKeyDown(KeyCode.LeftControl))
-        {
-            Vector3 scale = transform.localScale;
-            if (crouch)
-            {
-                scale.y = 1f;
-                crouch = false;
-            }
-            else
-            {
-                scale.y = 0.5f;
-                crouch = true;
-            }
-            transform.localScale = scale;
-        }
+        transform.position = startPosition;
+        targetXPosition = 0;
     }
 
     private int CurrentNumOfLanes()

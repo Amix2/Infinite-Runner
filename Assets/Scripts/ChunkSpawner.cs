@@ -9,10 +9,12 @@ public class ChunkSpawner : MonoBehaviour
     public GameObject flatChunk;
 
     private int emptyChunksAfterDeath = 3;
-    private List<Chunk> orderedChunks;
+    private List<Chunk> orderedChunks = new List<Chunk>();
     public Chunk LastChunk => orderedChunks.Count > 0 ? orderedChunks[orderedChunks.Count - 1] : null;
-    public Chunk FirstChunk => orderedChunks[0];
+    public Chunk FirstChunk => orderedChunks.Count > 0 ? orderedChunks[0] : null;
     private Vector3 PlayerPosition => player.transform.position;
+    private Vector3 LastChunkEndPosition => LastChunk != null ? LastChunk.EndPosition : Vector3.zero;
+    private Vector3 SpawnNewChunkPosition => LastChunk != null ? LastChunk.EndPosition : player.transform.position;
 
     // Start is called before the first frame update
     private void Start()
@@ -23,28 +25,42 @@ public class ChunkSpawner : MonoBehaviour
         }
         flatChunk.GetComponent<Chunk>().Init();
 
-        if(orderedChunks == null)
+        //if (orderedChunks == null)
+        //{
+        //    orderedChunks = new List<Chunk>();
+        //}
+
+        //GameObject.Find("Player").GetComponent<PlayerController>().OnDeath += PutEmptyLevelOnDeath;
+        GameState.OnStateChange += OnStateChange;
+    }
+
+    private void OnStateChange(GameStateValue gameState)
+    {
+        if(gameState == GameStateValue.Reset_Normal)
         {
-            orderedChunks = new List<Chunk>();
-            GameObject firstChunk = Instantiate(startingChunk, Vector3.zero, Quaternion.identity);
-        
-            orderedChunks.Add(firstChunk.GetComponent<Chunk>());
+            ClearChunks();
+            InsertNextChunk(startingChunk);
+            GameObject.Find("Player").GetComponent<PlayerController>().OnDeath += PutEmptyLevelOnDeath;
+        } else if(gameState != GameStateValue.Normal)
+        {
+            GameObject.Find("Player").GetComponent<PlayerController>().OnDeath -= PutEmptyLevelOnDeath;
         }
-
-
-        GameObject.Find("Player").GetComponent<PlayerController>().OnDeath += PutEmptyLevelOnDeath;
     }
 
     // Update is called once per frame
     private void Update()
     {
+        if(LastChunk == null)
+        {
+            InsertNextChunk(startingChunk);
+        }
         if (LastChunk.DistanceToEnd(PlayerPosition) < Settings.World.minDistanceInFront)
         {
             GameObject nextChunk = GetNextChunk();
             InsertNextChunk(nextChunk);
         }
 
-        if (FirstChunk.DistanceToEnd(PlayerPosition) < 0)
+        if (FirstChunk != null && FirstChunk.DistanceToEnd(PlayerPosition) < 0)
         {
             Destroy(FirstChunk.gameObject);
             orderedChunks.RemoveAt(0);
@@ -53,14 +69,13 @@ public class ChunkSpawner : MonoBehaviour
 
     private void InsertNextChunk(GameObject nextChunk)
     {
-        Vector3 spawnPos = LastChunk != null ? LastChunk.EndPosition : Vector3.zero;
-        GameObject chunk = Instantiate(nextChunk, spawnPos, Quaternion.identity);
+        GameObject chunk = Instantiate(nextChunk, LastChunkEndPosition, Quaternion.identity);
         orderedChunks.Add(chunk.GetComponent<Chunk>());
     }
 
     public void SetNextChunk(GameObject nextChunk)
     {
-        for(int i = orderedChunks.Count-1; i>=1; i--)
+        for (int i = orderedChunks.Count - 1; i >= 1; i--)
         {
             Destroy(orderedChunks[i].gameObject);
             orderedChunks.RemoveAt(i);
@@ -70,10 +85,11 @@ public class ChunkSpawner : MonoBehaviour
 
     public void ClearChunks()
     {
-        foreach(var chunk in orderedChunks)
-        {
-            Destroy(chunk.gameObject);
-        }
+        if(orderedChunks != null)
+            foreach (var chunk in orderedChunks)
+            {
+                Destroy(chunk.gameObject);
+            }
         orderedChunks = new List<Chunk>();
     }
 

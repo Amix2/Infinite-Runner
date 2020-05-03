@@ -19,6 +19,7 @@ public class ScoreCount : MonoBehaviour
         playerController = GameObject.Find("Player").GetComponent<PlayerController>();
         playerController.OnDeath += HandleDeath;
         textMesh.text = "Score: " + scoreValue;
+        GameState.OnStateChange += OnStateChange;
     }
 
     void HandleDeath()
@@ -31,6 +32,12 @@ public class ScoreCount : MonoBehaviour
         scoreValue = (int) playerController.transform.position.z;
         topScore = topScore < Score ? Score : topScore;
         textMesh.text = "Score: " + Score + "\n" + "(" + topScore + ")";
+    }
 
+    private void OnStateChange(GameStateValue gameState)
+    {
+        scoreSubtract = 0;
+        scoreValue = 0;
+        topScore = 0;
     }
 }

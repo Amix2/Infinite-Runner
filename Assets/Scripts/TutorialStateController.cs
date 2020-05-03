@@ -40,7 +40,6 @@ public class TutorialStateController : GameStateController, IInputMode
 
     public override GameStateValue UpdateStateContoller()
     {
-        print(stateIndex);
         if (stateIndex == 0 && DistanceFromStart > nextStop)
         {   // welcome
             welcomeMsg.SetActive(true);
@@ -112,15 +111,7 @@ public class TutorialStateController : GameStateController, IInputMode
 
     public void ResetTutorial()
     {
-        spaceToCont.SetActive(false);
-        blackCanvas.SetActive(false);
-        welcomeMsg.SetActive(false);
-        sceneInfo.SetActive(false);
-        laneSwitchInfo.SetActive(false);
-        avoidWallsInfo.SetActive(false);
-        singleJumpInfo.SetActive(false);
-        multipleJumpInfo.SetActive(false);
-        endTutorial.SetActive(false);
+        DisableAllPanels();
         freezeCharacter = false;
         blockLaneSwitch = true;
         blockJump = true;
@@ -135,23 +126,41 @@ public class TutorialStateController : GameStateController, IInputMode
     private void Awake()
     {
         GameState.OnStateChange += OnStateChange;
-        player.GetComponent<PlayerController>().OnDeath += OnDeath;
     }
 
     private void OnStateChange(GameStateValue gameState)
     {
-        if (gameState == GameStateValue.New_Tutorial)
+        if (gameState == GameStateValue.Reset_Tutorial)
         {
+            player.GetComponent<PlayerController>().OnDeath += OnDeath;
             ResetTutorial();
-        } else if(gameState != GameStateValue.Tutorial)
+        }
+        if (gameState == GameStateValue.Tutorial)
         {
+            player.GetComponent<PlayerController>().OnDeath += OnDeath;
+        }
+        if (gameState != GameStateValue.Reset_Tutorial && gameState != GameStateValue.Tutorial)
+        {
+            DisableAllPanels();
             player.GetComponent<PlayerController>().OnDeath -= OnDeath;
         }
     }
 
+    private void DisableAllPanels()
+    {
+        spaceToCont.SetActive(false);
+        blackCanvas.SetActive(false);
+        welcomeMsg.SetActive(false);
+        sceneInfo.SetActive(false);
+        laneSwitchInfo.SetActive(false);
+        avoidWallsInfo.SetActive(false);
+        singleJumpInfo.SetActive(false);
+        multipleJumpInfo.SetActive(false);
+        endTutorial.SetActive(false);
+    }
+
     private void OnDeath()
     {
-        print("On deathg");
         float spawnPos = 0;
         for(int i=0; i< stateIndex; i++)
         {
@@ -159,19 +168,19 @@ public class TutorialStateController : GameStateController, IInputMode
         }
         nextStop -= stopArray[stateIndex];
         stateIndex--;
+        player.GetComponent<PlayerController>().ResetPosition();
         player.transform.position = new Vector3(0, 0.65f, spawnPos);
     }
 
     public void OnClickContinue()
     {
         endTutorial.SetActive(false);
-        GameState.instance.CurrentGameState = GameStateValue.Normal;
+        GameState.SetState(GameStateValue.Normal);
     }
 
     public void OnClickRepeat()
     {
-        player.GetComponent<PlayerController>().forwardSpeed = 1f;
-        GameState.instance.CurrentGameState = GameStateValue.New_Tutorial;
+        GameState.SetState(GameStateValue.Tutorial);
     }
 
     private bool WaitToUnfreeze()

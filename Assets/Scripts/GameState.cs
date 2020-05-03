@@ -12,7 +12,7 @@ public class GameState : MonoBehaviour
     public GameStateValue CurrentGameState
     {
         get => currentGameState;
-        set {
+        private set {
             OnStateChange?.Invoke(value);
             currentGameState = value; 
             inputMode = GetInputMode(value);
@@ -24,7 +24,7 @@ public class GameState : MonoBehaviour
     private IInputMode inputMode;
     private GameStateValue currentGameState = GameStateValue.Normal;
     private GameStateController stateController;
-    private bool freezeGame = false;
+    private bool FreezeGame => CurrentGameState == GameStateValue.Pause;
     private GameStateValue lastGameState;
 
     private void Awake()
@@ -36,7 +36,7 @@ public class GameState : MonoBehaviour
     {
         if (startWithTutorial)
         {
-            CurrentGameState = GameStateValue.New_Tutorial;
+            CurrentGameState = GameStateValue.Reset_Tutorial;
         }
         else
         {
@@ -44,31 +44,32 @@ public class GameState : MonoBehaviour
         }
     }
 
+    public static void SetState(GameStateValue gameState)
+    {
+        instance.CurrentGameState = gameState;
+    }
+
     private void Update()
     {
         if (Input.GetKeyDown("escape"))
         {
-            if (freezeGame)
+            if (FreezeGame)
             {
-                OnStateChange?.Invoke(lastGameState);
                 CurrentGameState = lastGameState;
             }
             else
             {
                 lastGameState = CurrentGameState;
-                OnStateChange?.Invoke(GameStateValue.Pause);
                 CurrentGameState = GameStateValue.Pause;
             }
-            freezeGame = !freezeGame;
         }
 
-        if (!freezeGame)
+        if (!FreezeGame)
         {
             GameStateValue newState = stateController.UpdateStateContoller();
             if (newState != CurrentGameState)
             {
                 stateController = GetStateController(newState);
-                OnStateChange?.Invoke(newState);
                 CurrentGameState = newState;
                 inputMode = instance.GetInputMode(instance.CurrentGameState);
             }
@@ -80,14 +81,14 @@ public class GameState : MonoBehaviour
         switch (state)
         {
             case GameStateValue.Normal:
+            case GameStateValue.Reset_Normal:
                 return new NormalInputMode();
 
-            case GameStateValue.Freeze:
             case GameStateValue.Pause:
                 return new FreezeInputMode();
 
             case GameStateValue.Tutorial:
-            case GameStateValue.New_Tutorial:
+            case GameStateValue.Reset_Tutorial:
                 return GetComponent<TutorialStateController>();
         }
         return null;
@@ -98,12 +99,12 @@ public class GameState : MonoBehaviour
         switch (state)
         {
             case GameStateValue.Normal:
-            case GameStateValue.Freeze:
+            case GameStateValue.Reset_Normal:
             case GameStateValue.Pause:
                 return GetComponent<DefaultStateController>();
 
             case GameStateValue.Tutorial:
-            case GameStateValue.New_Tutorial:
+            case GameStateValue.Reset_Tutorial:
                 return GetComponent<TutorialStateController>();
         }
         return null;
@@ -113,9 +114,9 @@ public class GameState : MonoBehaviour
 public enum GameStateValue
 {
     Normal,
-    Freeze,
+    Reset_Normal,
     Tutorial,
-    New_Tutorial,
+    Reset_Tutorial,
     Pause
 }
 
