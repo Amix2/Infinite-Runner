@@ -132,7 +132,6 @@ public class TutorialStateController : GameStateController, IInputMode
     {
         if (gameState == GameStateValue.Reset_Tutorial)
         {
-            player.GetComponent<PlayerController>().OnDeath += OnDeath;
             ResetTutorial();
         }
         if (gameState == GameStateValue.Tutorial)

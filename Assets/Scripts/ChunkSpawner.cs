@@ -40,8 +40,12 @@ public class ChunkSpawner : MonoBehaviour
         {
             ClearChunks();
             InsertNextChunk(startingChunk);
+        }
+        if (gameState == GameStateValue.Normal)
+        {
             GameObject.Find("Player").GetComponent<PlayerController>().OnDeath += PutEmptyLevelOnDeath;
-        } else if(gameState != GameStateValue.Normal)
+        }
+        if (gameState != GameStateValue.Normal)
         {
             GameObject.Find("Player").GetComponent<PlayerController>().OnDeath -= PutEmptyLevelOnDeath;
         }
