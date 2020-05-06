@@ -35,4 +35,10 @@ public class PauseCanvas : MonoBehaviour
         player.GetComponent<PlayerController>().ResetPosition();
         GameState.SetState(GameStateValue.Reset_Normal);
     }
+
+    public void OnExit()
+    {
+        player.GetComponent<PlayerController>().ResetPosition();
+        GameState.SetState(GameStateValue.Main_Menu);
+    }
 }

@@ -34,14 +34,7 @@ public class GameState : MonoBehaviour
 
     private void Start()
     {
-        if (startWithTutorial)
-        {
-            CurrentGameState = GameStateValue.Reset_Tutorial;
-        }
-        else
-        {
-            CurrentGameState = GameStateValue.Normal;
-        }
+        CurrentGameState = GameStateValue.Main_Menu;
     }
 
     public static void SetState(GameStateValue gameState)
@@ -51,7 +44,7 @@ public class GameState : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown("escape"))
+        if (Input.GetKeyDown("escape") && currentGameState != GameStateValue.Main_Menu)
         {
             if (FreezeGame)
             {
@@ -64,15 +57,12 @@ public class GameState : MonoBehaviour
             }
         }
 
-        if (!FreezeGame)
+        GameStateValue newState = stateController.UpdateStateContoller();
+        if (newState != CurrentGameState)
         {
-            GameStateValue newState = stateController.UpdateStateContoller();
-            if (newState != CurrentGameState)
-            {
-                stateController = GetStateController(newState);
-                CurrentGameState = newState;
-                inputMode = instance.GetInputMode(instance.CurrentGameState);
-            }
+            stateController = GetStateController(newState);
+            CurrentGameState = newState;
+            inputMode = instance.GetInputMode(instance.CurrentGameState);
         }
     }
 
@@ -82,6 +72,7 @@ public class GameState : MonoBehaviour
         {
             case GameStateValue.Normal:
             case GameStateValue.Reset_Normal:
+            case GameStateValue.Main_Menu:
                 return new NormalInputMode();
 
             case GameStateValue.Pause:
@@ -100,8 +91,11 @@ public class GameState : MonoBehaviour
         {
             case GameStateValue.Normal:
             case GameStateValue.Reset_Normal:
-            case GameStateValue.Pause:
                 return GetComponent<DefaultStateController>();
+
+            case GameStateValue.Pause:
+            case GameStateValue.Main_Menu:
+                return GetComponent<PreserveStateController>();
 
             case GameStateValue.Tutorial:
             case GameStateValue.Reset_Tutorial:
@@ -117,7 +111,8 @@ public enum GameStateValue
     Reset_Normal,
     Tutorial,
     Reset_Tutorial,
-    Pause
+    Pause,
+    Main_Menu
 }
 
 public abstract class GameStateController : MonoBehaviour
