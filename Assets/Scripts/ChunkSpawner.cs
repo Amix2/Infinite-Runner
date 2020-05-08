@@ -50,7 +50,7 @@ public class ChunkSpawner : MonoBehaviour
             GameObject.Find("Player").GetComponent<PlayerController>().OnDeath -= PutEmptyLevelOnDeath;
         }
     }
-
+     
     // Update is called once per frame
     private void Update()
     {

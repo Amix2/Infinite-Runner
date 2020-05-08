@@ -36,8 +36,11 @@ public class ScoreCount : MonoBehaviour
 
     private void OnStateChange(GameStateValue gameState)
     {
-        scoreSubtract = 0;
-        scoreValue = 0;
-        topScore = 0;
+        if(gameState == GameStateValue.Reset_Normal || gameState == GameStateValue.Reset_Tutorial)
+        {
+            scoreSubtract = 0;
+            scoreValue = 0;
+            topScore = 0;
+        }
     }
 }
