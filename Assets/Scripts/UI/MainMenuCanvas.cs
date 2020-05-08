@@ -36,4 +36,9 @@ public class MainMenuCanvas : MonoBehaviour
     {
         GameState.SetState(GameStateValue.Reset_Tutorial);
     }
+
+    public void OnQuit()
+    {
+        Application.Quit();
+    }
 }

@@ -36,8 +36,9 @@ public class ChunkSpawner : MonoBehaviour
 
     private void OnStateChange(GameStateValue gameState)
     {
-        if(gameState == GameStateValue.Reset_Normal)
+        if(gameState == GameStateValue.Reset_Normal || gameState == GameStateValue.Main_Menu)
         {
+            GameObject.Find("Player").GetComponent<PlayerController>().ResetPosition();
             ClearChunks();
             InsertNextChunk(startingChunk);
         }
