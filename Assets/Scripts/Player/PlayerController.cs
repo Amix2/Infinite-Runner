@@ -3,18 +3,21 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    public float jumpHeight = 1f;
-    public float jumpDistance = 8f;
+    public float jumpHeight;
+    public float jumpDistance;
     public LayerMask groundLayerMask;
     public LayerMask frontLayerMask;
     public LayerMask sideLayerMask;
     public LayerMask sidePanelLayerMask;
-    public float forwardSpeed = 1f;
-    public float safeGapToSide = 0.2f;
-    public float maxLineSwitchSpeed = 10f;
-    public float laneSwitchInitSpeed = 4f;
-    public float laneSwitchAcceleration = 8f;
-    private float laneSwitchSpeedCurrent = 0f;
+    public float forwardSpeed;
+    public float safeGapToSide;
+    public float maxLineSwitchSpeed;
+    public float laneSwitchInitSpeed;
+    public float laneSwitchAcceleration;
+    private float laneSwitchSpeedCurrent;
+
+    [Range(0,5)]
+    public float fimeScale = 1;
 
     public ChunkSpawner chunkSpawner;
 
@@ -68,82 +71,17 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     private void Update()
     {
+        Time.timeScale = fimeScale;
         if (!GameState.InputMode.Freeze)
         {
-            if (FrontBoxCollision)
-            {
-                if (lastCollisionTime + collisionInterval < Time.realtimeSinceStartup)
-                {
-                    OnDeath?.Invoke();
-                    lastCollisionTime = Time.realtimeSinceStartup;
-                }
-            }
+            CheckDeath();
 
             forwardSpeed = Settings.World.playerAcceleration * Mathf.Sqrt(transform.position.z + 1);  // forward acceleration
-
-            velocity.y -= GravityY * Time.deltaTime;   // gravity
             velocity.z = ForwardVelocity;
 
-            if (!jumped && IsGrounded && GameState.InputMode.JumpKey)
-            {
-                velocity.y = JumpSpeedY;
-                jumped = true;
-            }
-            if (!IsGrounded) jumped = false;
-            if (IsGrounded && velocity.y < 0) velocity.y = 0;
-
-            if (GameState.InputMode.LeftKey)
-            {
-                // left     x  <
-                if (targetXPosition > -1 * CurrentNumOfLanes() / 2 && (ShouldGoRight || IsOnTargetLane))
-                    targetXPosition--;
-            }
-            if (GameState.InputMode.RightKey)
-            {   // right    > x
-                if (targetXPosition < CurrentNumOfLanes() / 2 && (ShouldGoLeft || IsOnTargetLane))
-                    targetXPosition++;
-            }
-
-            if (IsOnTargetLane)
-            {
-                transform.position = new Vector3(targetXPosition, transform.position.y, transform.position.z);
-                velocity.x = 0f;
-                laneSwitchSpeedCurrent = 0f;
-            }
-            else
-            {
-                if (laneSwitchSpeedCurrent < laneSwitchInitSpeed)
-                {
-                    laneSwitchSpeedCurrent = laneSwitchInitSpeed;
-                }
-                float velToLine = Mathf.Min(ForwardVelocity, (Mathf.Abs(PositionX - targetXPosition) / Time.deltaTime), laneSwitchSpeedCurrent + laneSwitchAcceleration * Time.deltaTime);
-                if (ShouldGoLeft)
-                {
-                    // go left
-                    if (!LeftBoxCollision)
-                    {
-                        velocity.x = -velToLine;
-                        laneSwitchSpeedCurrent += laneSwitchAcceleration * Time.deltaTime;
-                    }
-                    else
-                    {
-                        velocity.x = 0;
-                    }
-                }
-                else
-                {
-                    // go right
-                    if (!RightBoxCollision)
-                    {
-                        velocity.x = +velToLine;
-                        laneSwitchSpeedCurrent += laneSwitchAcceleration * Time.deltaTime;
-                    }
-                    else
-                    {
-                        velocity.x = 0;
-                    }
-                }
-            }
+            SetJump();
+            HandleLaneSwitchInput();
+            SetSideVelocity();
 
             if (velocity.z > GameState.InputMode.MaxForwardSpeed)
             {
@@ -151,6 +89,89 @@ public class PlayerController : MonoBehaviour
                 forwardSpeed = GameState.InputMode.MaxForwardSpeed * GameState.InputMode.MaxForwardSpeed;
             }
             transform.position += velocity * Time.deltaTime;
+        }
+    }
+
+    private void SetSideVelocity()
+    {
+        if (IsOnTargetLane)
+        {
+            transform.position = new Vector3(targetXPosition, transform.position.y, transform.position.z);
+            velocity.x = 0f;
+            laneSwitchSpeedCurrent = 0f;
+        }
+        else
+        {
+            if (laneSwitchSpeedCurrent < laneSwitchInitSpeed)
+            {
+                laneSwitchSpeedCurrent = laneSwitchInitSpeed;
+            }
+            float velToLine = Mathf.Min(ForwardVelocity, (Mathf.Abs(PositionX - targetXPosition) / Time.deltaTime), laneSwitchSpeedCurrent);
+            if (ShouldGoLeft)
+            {
+                // go left
+                if (!LeftBoxCollision)
+                {
+                    velocity.x = -velToLine;
+                    laneSwitchSpeedCurrent += laneSwitchAcceleration * Time.deltaTime;
+                }
+                else
+                {
+                    velocity.x = 0;
+                }
+            }
+            else
+            {
+                // go right
+                if (!RightBoxCollision)
+                {
+                    velocity.x = +velToLine;
+                    laneSwitchSpeedCurrent += laneSwitchAcceleration * Time.deltaTime;
+                }
+                else
+                {
+                    velocity.x = 0;
+                }
+            }
+        }
+    }
+
+    private void HandleLaneSwitchInput()
+    {
+        if (GameState.InputMode.LeftKey)
+        {
+            // left     x  <
+            if (targetXPosition > -1 * CurrentNumOfLanes() / 2 && (ShouldGoRight || IsOnTargetLane))
+                targetXPosition--;
+        }
+        if (GameState.InputMode.RightKey)
+        {   // right    > x
+            if (targetXPosition < CurrentNumOfLanes() / 2 && (ShouldGoLeft || IsOnTargetLane))
+                targetXPosition++;
+        }
+    }
+
+    private void SetJump()
+    {
+        velocity.y -= GravityY * Time.deltaTime;   // gravity
+        if (!jumped && IsGrounded && GameState.InputMode.JumpKey)
+        {
+            velocity.y = JumpSpeedY;
+            jumped = true;
+        }
+        if (!IsGrounded) jumped = false;
+        if (IsGrounded && velocity.y < 0) velocity.y = 0;
+    }
+
+    private void CheckDeath()
+    {
+        if (FrontBoxCollision)
+        {
+            if (lastCollisionTime + collisionInterval < Time.realtimeSinceStartup)
+            {
+                OnDeath?.Invoke();
+                lastCollisionTime = Time.realtimeSinceStartup;
+            }
         }
     }
 

@@ -14,9 +14,9 @@ public class NormalInputMode : IInputMode
 {
     public bool JumpKey => Input.GetKey(KeyCode.Space);
 
-    public bool LeftKey => (Input.GetKey(KeyCode.A) && !Input.GetKey(KeyCode.S)) || Input.GetKeyDown(KeyCode.A);
+    public bool LeftKey => Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow);
 
-    public bool RightKey => (Input.GetKey(KeyCode.D) && !Input.GetKey(KeyCode.S)) || Input.GetKeyDown(KeyCode.D);
+    public bool RightKey => Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow);
 
     public float MaxForwardSpeed => 50f;
 
