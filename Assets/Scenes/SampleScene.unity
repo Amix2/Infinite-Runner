@@ -5956,6 +5956,7 @@ MonoBehaviour:
   maxLineSwitchSpeed: 8
   laneSwitchInitSpeed: 4
   laneSwitchAcceleration: 60
+  fimeScale: 1
   chunkSpawner: {fileID: 1373022887}
 --- !u!136 &1679002807
 CapsuleCollider:
