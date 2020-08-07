@@ -1,14 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlayerCamera : MonoBehaviour
 {
-
     public GameObject mainCamera;
     public GameObject sideCamera;
 
-    void Start()
+    private void Start()
     {
         GameState.OnStateChange += OnStateChange;
     }

@@ -1,19 +1,17 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 
 public class ScoreCount : MonoBehaviour
 {
-    TextMeshProUGUI textMesh;
-    int scoreSubtract = 0;
-    int scoreValue = 0;
+    private TextMeshProUGUI textMesh;
+    private int scoreSubtract = 0;
+    private int scoreValue = 0;
     int Score => (scoreValue - scoreSubtract);
-    int topScore = 0;
-    PlayerController playerController;
+    private int topScore = 0;
+    private PlayerController playerController;
 
     // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
         textMesh = GetComponent<TextMeshProUGUI>();
         playerController = GameObject.Find("Player").GetComponent<PlayerController>();
@@ -22,21 +20,21 @@ public class ScoreCount : MonoBehaviour
         GameState.OnStateChange += OnStateChange;
     }
 
-    void HandleDeath()
+    private void HandleDeath()
     {
         scoreSubtract += Score / 2;
     }
 
     private void Update()
     {
-        scoreValue = (int) playerController.transform.position.z;
+        scoreValue = (int)playerController.transform.position.z;
         topScore = topScore < Score ? Score : topScore;
         textMesh.text = "Score: " + Score + "\n" + "(" + topScore + ")";
     }
 
     private void OnStateChange(GameStateValue gameState)
     {
-        if(gameState == GameStateValue.Reset_Normal || gameState == GameStateValue.Reset_Tutorial)
+        if (gameState == GameStateValue.Reset_Normal || gameState == GameStateValue.Reset_Tutorial)
         {
             scoreSubtract = 0;
             scoreValue = 0;

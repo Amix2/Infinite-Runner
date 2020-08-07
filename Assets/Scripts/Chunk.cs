@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Chunk : MonoBehaviour
 {
-
     public int length;
     public bool[] inputArray;
     public bool[] outputArray;
@@ -15,7 +11,7 @@ public class Chunk : MonoBehaviour
     public int InputMask { get; private set; }
     public int OutputMask { get; private set; }
     public Vector3 BeginPosition => transform.position;
-    public Vector3 EndPosition => BeginPosition + new Vector3(0,0,length);
+    public Vector3 EndPosition => BeginPosition + new Vector3(0, 0, length);
 
     public float DistanceToBegin(Vector3 fromPosition)
     {
@@ -28,7 +24,7 @@ public class Chunk : MonoBehaviour
     }
 
     // Start is called before the first frame update
-    void Awake()
+    private void Awake()
     {
         Init();
     }
@@ -69,12 +65,6 @@ public class Chunk : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        Gizmos.DrawWireCube(transform.position + new Vector3(0,0,length / 2), new Vector3(Mathf.Max(NumOfInputLanes, NumOfOutputLanes), 4f, length));
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        Gizmos.DrawWireCube(transform.position + new Vector3(0, 0, length / 2), new Vector3(Mathf.Max(NumOfInputLanes, NumOfOutputLanes), 4f, length));
     }
 }

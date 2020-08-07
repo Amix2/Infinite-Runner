@@ -16,7 +16,7 @@ public class PlayerController : MonoBehaviour
     public float laneSwitchAcceleration;
     private float laneSwitchSpeedCurrent;
 
-    [Range(0,5)]
+    [Range(0, 5)]
     public float fimeScale = 1;
 
     public ChunkSpawner chunkSpawner;

@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class TutorialStateController : GameStateController, IInputMode
 {
@@ -50,7 +49,7 @@ public class TutorialStateController : GameStateController, IInputMode
         }
 
         if (stateIndex == 1 && DistanceFromStart > nextStop)
-        {   // welcome
+        {
             sceneInfo.SetActive(true);
             if (WaitToUnfreeze())
             {
@@ -59,7 +58,7 @@ public class TutorialStateController : GameStateController, IInputMode
         }
 
         if (stateIndex == 2 && DistanceFromStart > nextStop)
-        {   // welcome
+        {
             laneSwitchInfo.SetActive(true);
             if (WaitToUnfreeze())
             {
@@ -69,7 +68,7 @@ public class TutorialStateController : GameStateController, IInputMode
         }
 
         if (stateIndex == 3 && DistanceFromStart > nextStop)
-        {   // welcome
+        {
             avoidWallsInfo.SetActive(true);
             if (WaitToUnfreeze())
             {
@@ -78,7 +77,7 @@ public class TutorialStateController : GameStateController, IInputMode
         }
 
         if (stateIndex == 4 && DistanceFromStart > nextStop)
-        {   // welcome
+        {
             singleJumpInfo.SetActive(true);
             if (WaitToUnfreeze())
             {
@@ -88,7 +87,7 @@ public class TutorialStateController : GameStateController, IInputMode
         }
 
         if (stateIndex == 5 && DistanceFromStart > nextStop)
-        {   // welcome
+        {
             multipleJumpInfo.SetActive(true);
             if (WaitToUnfreeze())
             {
@@ -97,7 +96,7 @@ public class TutorialStateController : GameStateController, IInputMode
         }
 
         if (stateIndex == 6 && DistanceFromStart > nextStop)
-        {   // welcome
+        {
             endTutorial.SetActive(true);
             if (WaitToUnfreeze())
             {
@@ -161,7 +160,7 @@ public class TutorialStateController : GameStateController, IInputMode
     private void OnDeath()
     {
         float spawnPos = 0;
-        for(int i=0; i< stateIndex; i++)
+        for (int i = 0; i < stateIndex; i++)
         {
             spawnPos += stopArray[i];
         }

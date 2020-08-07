@@ -12,9 +12,10 @@ public class GameState : MonoBehaviour
     public GameStateValue CurrentGameState
     {
         get => currentGameState;
-        private set {
+        private set
+        {
             OnStateChange?.Invoke(value);
-            currentGameState = value; 
+            currentGameState = value;
             inputMode = GetInputMode(value);
             stateController = GetStateController(value);
         }

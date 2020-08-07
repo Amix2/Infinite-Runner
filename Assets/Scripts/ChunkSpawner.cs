@@ -25,18 +25,12 @@ public class ChunkSpawner : MonoBehaviour
         }
         flatChunk.GetComponent<Chunk>().Init();
 
-        //if (orderedChunks == null)
-        //{
-        //    orderedChunks = new List<Chunk>();
-        //}
-
-        //GameObject.Find("Player").GetComponent<PlayerController>().OnDeath += PutEmptyLevelOnDeath;
         GameState.OnStateChange += OnStateChange;
     }
 
     private void OnStateChange(GameStateValue gameState)
     {
-        if(gameState == GameStateValue.Reset_Normal || gameState == GameStateValue.Main_Menu)
+        if (gameState == GameStateValue.Reset_Normal || gameState == GameStateValue.Main_Menu)
         {
             GameObject.Find("Player").GetComponent<PlayerController>().ResetPosition();
             ClearChunks();
@@ -51,11 +45,11 @@ public class ChunkSpawner : MonoBehaviour
             GameObject.Find("Player").GetComponent<PlayerController>().OnDeath -= PutEmptyLevelOnDeath;
         }
     }
-     
+
     // Update is called once per frame
     private void Update()
     {
-        if(LastChunk == null)
+        if (LastChunk == null)
         {
             InsertNextChunk(startingChunk);
         }
@@ -90,7 +84,7 @@ public class ChunkSpawner : MonoBehaviour
 
     public void ClearChunks()
     {
-        if(orderedChunks != null)
+        if (orderedChunks != null)
             foreach (var chunk in orderedChunks)
             {
                 Destroy(chunk.gameObject);

@@ -1,23 +1,20 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class MainMenuCanvas : MonoBehaviour
 {
     // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
         GameState.OnStateChange += OnStateChange;
     }
 
     private void Update()
     {
-
     }
 
     private void OnStateChange(GameStateValue gameState)
     {
-        if(gameState == GameStateValue.Main_Menu)
+        if (gameState == GameStateValue.Main_Menu)
         {
             gameObject.SetActive(true);
         }

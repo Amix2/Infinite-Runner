@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -7,6 +6,7 @@ using UnityEngine;
 public class ChunkSpawnerAvaliableChunksEditor : Editor
 {
     public ChunkSpawner chunkSpawner;
+
     public void FindChunks()
     {
         string[] guids = AssetDatabase.FindAssets("t:prefab", null);
@@ -24,7 +24,6 @@ public class ChunkSpawnerAvaliableChunksEditor : Editor
 
     public override void OnInspectorGUI()
     {
-        //chunkSpawner = EditorGUILayout.ObjectField(chunkSpawner, typeof(GameObject), true);
         chunkSpawner = GameObject.Find("ChunkSpawner").GetComponent<ChunkSpawner>();
         if (GUILayout.Button("Assign Avaliable Chunks"))
             FindChunks();
